@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Empresas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        textarea, input[type="text"], input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cadastro de Empresas</h1>
+
+    <h2>Adicionar Empresa</h2>
+    <input type="text" id="companyName" placeholder="Nome da Organização" />
+    <input type="text" id="companySector" placeholder="Setor" />
+    <button onclick="addCompany()" class="btn">Adicionar Empresa</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome Organização</th>
+                <th>Setor</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Linhas da tabela serão inseridas aqui -->
+        </tbody>
+    </table>
+
+    <script>
+        function loadCompanies() {
+            fetch('http://localhost:3000/empresas')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('tableBody');
+                    tableBody.innerHTML = ''; // Limpar tabela
+                    data.forEach(company => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${company.nome}</td>
+                            <td>${company.setor}</td>
+                            <td>
+                                <button onclick="deleteCompany(${company.id})" class="btn">Deletar</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar empresas:', error));
+        }
+
+        function addCompany() {
+            const name = document.getElementById('companyName').value;
+            const sector = document.getElementById('companySector').value;
+
+            if (!name || !sector) {
+                alert('Por favor, preencha todos os campos!');
+                return;
+            }
+
+            const data = { nome: name, setor: sector };
+
+            fetch('http://localhost:3000/empresas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Empresa adicionada com sucesso! ID: ${data.id}`);
+                loadCompanies(); // Recarregar a tabela após adicionar
+                document.getElementById('companyName').value = ''; // Limpar campo
+                document.getElementById('companySector').value = ''; // Limpar campo
+            })
+            .catch(error => console.error('Erro ao adicionar empresa:', error));
+        }
+
+        function deleteCompany(id) {
+            fetch(`http://localhost:3000/empresas/${id}`, {
+                method: 'DELETE',
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Empresa deletada com sucesso!');
+                    loadCompanies(); // Recarregar a tabela após deletar
+                } else {
+                    alert('Erro ao deletar a empresa.');
+                }
+            })
+            .catch(error => console.error('Erro ao deletar:', error));
+        }
+
+        window.onload = loadCompanies;
+    </script>
+</body>
+</html>
